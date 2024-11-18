@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Grade Calculator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="form-box">
+            <h1>Student Grade Calculator</h1>
+            <form id="gradeForm">
+                <div class="input-group">
+                    <label for="student_id">Student ID</label>
+                    <input type="number" id="student_id" name="student_id" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="grade">Grade</label>
+                    <input type="number" id="grade" name="grade" step="0.01" required>
+                </div>
+
+                <button type="submit" class="btn-submit">Submit Grade</button>
+            </form>
+
+            <button id="fetchGrades" class="btn-submit" style="margin-top: 20px;">View All Grades</button>
+        </div>
+
+        <div id="results" class="results-box" style="margin-top: 20px; display: none;">
+            <h2>All Grades</h2>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody id="gradesTable"></tbody>
+            </table>
+            <p id="averageGrade"></p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://your-api-url.amazonaws.com/dev/grades';
+
+        // Handle form submission
+        document.getElementById('gradeForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const studentId = document.getElementById('student_id').value;
+            const grade = parseFloat(document.getElementById('grade').value);
+
+            // Send data to API
+            const response = await fetch(API_BASE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ student_id: studentId, grade }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('Grade submitted successfully!');
+                document.getElementById('gradeForm').reset();
+            } else {
+                alert(`Error: ${result.error}`);
+            }
+        });
+
+        // Handle fetching all grades and average
+        document.getElementById('fetchGrades').addEventListener('click', async function () {
+            const response = await fetch(API_BASE_URL);
+            const result = await response.json();
+
+            if (response.ok) {
+                const gradesTable = document.getElementById('gradesTable');
+                const resultsBox = document.getElementById('results');
+                const averageGrade = document.getElementById('averageGrade');
+
+                gradesTable.innerHTML = ''; // Clear existing rows
+
+                result.students.forEach(student => {
+                    const row = `<tr>
+                        <td>${student.student_id}</td>
+                        <td>${student.grade}</td>
+                    </tr>`;
+                    gradesTable.innerHTML += row;
+                });
+
+                averageGrade.textContent = `Average Grade: ${result.average_grade}`;
+                resultsBox.style.display = 'block'; // Show results
+            } else {
+                alert('Error fetching grades.');
+            }
+        });
+    </script>
+</body>
+</html>
